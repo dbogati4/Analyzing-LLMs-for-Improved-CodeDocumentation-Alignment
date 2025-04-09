@@ -1,0 +1,48 @@
+{
+    "file": "tests_test_database.py",
+    "function": "test_timewindows",
+    "version_data": [
+        {
+            "v11": {
+                "docstring_lines": {
+                    "start_line": 18,
+                    "end_line": 20
+                },
+                "code_lines": {
+                    "start_line": 20,
+                    "end_line": 43
+                }
+            },
+            "commit_date_time": "2021-08-09 21:00:11+02:00",
+            "commit_sha": "c476e39bc2aa3f681925a765c9ae29952b5d92c1",
+            "commit_message": "fix stime does not exist",
+            "docstring": "unit tests for addNewTW and getFirstTWforProfile",
+            "code": "def test_timewindows(database):\n      \n    # clear the database before running this test\n    os.system('./slips.py -c slips.conf -cc')\n    profileid = 'profile_8.8.8.8'\n    # add a profile\n    database.addProfile(profileid,'00:00','1')\n    # add a tw to that profile (first tw)\n    database.addNewTW(profileid, 0.0)\n    # add  a new tw (last tw)\n    assert database.getFirstTWforProfile(profileid) == [('timewindow1', 0.0)]"
+        },
+        {
+            "v12": {
+                "docstring_lines": {
+                    "start_line": 16,
+                    "end_line": 18
+                },
+                "code_lines": {
+                    "start_line": 18,
+                    "end_line": 27
+                }
+            },
+            "commit_date_time": "2021-08-10 17:25:40+02:00",
+            "commit_sha": "ae7afd2ac83bb0cc6fda551873279c99c0b17e45",
+            "commit_message": "fix stime does not exist",
+            "docstring": "unit tests for addNewTW ,getLastTWforProfile and getFirstTWforProfile",
+            "code": "def test_timewindows(database):\n      \n    profileid = 'profile_192.168.1.1'\n    # add a profile\n    database.addProfile(profileid,'00:00','1')\n    # add a tw to that profile (first tw)\n    database.addNewTW(profileid, 0.0)\n    # add  a new tw (last tw)\n    database.addNewTW(profileid, 5.0)\n    assert database.getFirstTWforProfile(profileid) == [('timewindow1', 0.0)]\n    assert database.getLastTWforProfile(profileid) == [('timewindow2', 5.0)]"
+        }
+    ],
+    "diff_code": "  def test_timewindows(database):\n        \n-     # clear the database before running this test\n-     os.system('./slips.py -c slips.conf -cc')\n-     profileid = 'profile_8.8.8.8'\n?                            ^ ^^^\n\n+     profileid = 'profile_192.168.1.1'\n?                          ++++++  ^ ^\n\n      # add a profile\n      database.addProfile(profileid,'00:00','1')\n      # add a tw to that profile (first tw)\n      database.addNewTW(profileid, 0.0)\n      # add  a new tw (last tw)\n+     database.addNewTW(profileid, 5.0)\n      assert database.getFirstTWforProfile(profileid) == [('timewindow1', 0.0)]\n+     assert database.getLastTWforProfile(profileid) == [('timewindow2', 5.0)]",
+    "diff_docstring": "- unit tests for addNewTW and getFirstTWforProfile\n+ unit tests for addNewTW ,getLastTWforProfile and getFirstTWforProfile\n?                         +++++++++++++++++++++\n",
+    "whitespace_only_code": false,
+    "whitespace_only_docstring": false,
+    "file_path": "tests/test_database.py",
+    "filename": "test_database.py",
+    "project": "StratosphereLinuxIPS",
+    "owner": "stratosphereips"
+}
