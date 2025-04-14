@@ -5,7 +5,7 @@ import pandas as pd
 def main():
     # step 1: open and read the jsonl file
     all_data = []
-    with open("data/train.jsonl") as input_file:
+    with open("datasets/datasets.jsonl") as input_file:
         for each_line in input_file:
             all_data.append(json.loads(each_line))
     
@@ -15,6 +15,8 @@ def main():
     version_data = []
     diff_code = []
     diff_docstring = []
+    code = []
+    docstring = []
     
     for each_row in all_data:
         file_name.append(each_row['file'])
@@ -26,12 +28,13 @@ def main():
             if int(list(each_version.keys())[0].split("v")[1]) > latest_version:
                 latest_version = int(list(each_version.keys())[0].split("v")[1])
                 latest_version_index = i
-                
+        
         version_data.append(each_row["version_data"][latest_version_index][f"v{latest_version}"])
+        code.append(each_row["version_data"][latest_version_index].get("code"))
+        docstring.append(each_row["version_data"][latest_version_index].get("docstring"))
         diff_code.append(each_row["diff_code"])
         diff_docstring.append(each_row["diff_docstring"])
-    
-       
+
     # store useful fields in dataframe
     dataframe_dict = {
         "file": file_name,
@@ -52,7 +55,12 @@ def main():
     count_null = df.isnull().sum()
     print(count_null)  # It verifies the datasets is pretty clean as there is no null value as well
     
+    # step 5: prepare input-output pairs for the model
+    df["input_text"] = df["diff_code"]
+    print(df["input_text"].isnull().sum())  # counting null value
     
+    df["target_text"] = df["diff_docstring"]
+    print(df["target_text"].isnull().sum())
 
 if __name__ == "__main__":
     main()
