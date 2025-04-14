@@ -41,10 +41,14 @@ def main():
         "function": function_name,
         "version": version_data,
         "diff_code": diff_code,
-        "diff_docstring": diff_docstring
+        "diff_docstring": diff_docstring,
+        "code": code,
+        "docstring": docstring
     } 
     
     df = pd.DataFrame(dataframe_dict)
+    print(df.to_string())
+    
     
     # converting to string to check the duplicate value
     df["version"] = df["version"].apply(str)
@@ -56,10 +60,10 @@ def main():
     print(count_null)  # It verifies the datasets is pretty clean as there is no null value as well
     
     # step 5: prepare input-output pairs for the model
-    df["input_text"] = df["diff_code"]
+    df["input_text"] = df["code"]
     print(df["input_text"].isnull().sum())  # counting null value
     
-    df["target_text"] = df["diff_docstring"]
+    df["target_text"] = df["docstring"]
     print(df["target_text"].isnull().sum())
 
 if __name__ == "__main__":
