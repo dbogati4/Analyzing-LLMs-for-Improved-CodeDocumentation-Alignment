@@ -1,5 +1,11 @@
 import json
 import pandas as pd
+from huggingface_hub import login
+from transformers import AutoTokenizer
+import configparser
+from datasets import Dataset
+from transformers import AutoModelForMaskedLM, Trainer, TrainingArguments
+
 
 
 def main():
@@ -40,15 +46,11 @@ def main():
         "file": file_name,
         "function": function_name,
         "version": version_data,
-        "diff_code": diff_code,
-        "diff_docstring": diff_docstring,
         "code": code,
         "docstring": docstring
     } 
     
     df = pd.DataFrame(dataframe_dict)
-    print(df.to_string())
-    
     
     # converting to string to check the duplicate value
     df["version"] = df["version"].apply(str)
@@ -65,6 +67,62 @@ def main():
     
     df["target_text"] = df["docstring"]
     print(df["target_text"].isnull().sum())
+    
+    # step 6: Setting up the tokenizer
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    huggingface_token = config["HuggingFace"]["token"]
+    
+    print("Logging to Hugging Face")
+    login(token=huggingface_token)
+    print("Log in successful")
+    tokenizer = AutoTokenizer.from_pretrained("microsoft/codebert-base", token=huggingface_token)  # this is using CODEBeRT model
+
+    tokenized_inputs = df["input_text"].apply(lambda x: tokenizer(x, padding="max_length", truncation=True, max_length=512))
+    tokenized_outputs = df["target_text"].apply(lambda x: tokenizer(x, padding="max_length", truncation=True, max_length=128))
+    print("Tokenized input and output files")
+    
+    df["input_ids"] = tokenized_inputs.apply(lambda x: x["input_ids"])
+    df["attention_mask"] = tokenized_inputs.apply(lambda x: x["attention_mask"])  # to indicate the actual content and the padded content
+    df["labels"] = tokenized_outputs.apply(lambda x: x["input_ids"])
+
+    # Step 7: Prepare the datasets for training
+    datasets = Dataset.from_pandas(df)
+    
+    # Split the dataset into 80-20% training and validation datasets
+    train_dataset = datasets.shuffle(seed=42).select([i for i in range(int(0.8 * len(datasets)))])
+    val_dataset = datasets.select([i for i in range(int(0.8 * len(datasets)), len(datasets))])
+  
+    # define the model
+    model = AutoModelForMaskedLM.from_pretrained("microsoft/codebert-base")
+    
+    training_args = TrainingArguments(
+        output_dir="./results",
+        eval_steps=500,
+        learning_rate=2e-5,
+        per_device_train_batch_size=8,
+        per_device_eval_batch_size=8,
+        num_train_epochs=3,
+        weight_decay=0.01,
+        save_strategy="epoch",
+        logging_dir="./logs",
+        logging_steps=10
+    )
+    
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=train_dataset,
+        eval_dataset= val_dataset
+    )
+    
+    trainer.train()
+    
+    trainer.evaluate()
+    
+    model.save_pretrained("./final_model")
+    tokenizer.save_pretrained("./final_model")
+
 
 if __name__ == "__main__":
     main()
